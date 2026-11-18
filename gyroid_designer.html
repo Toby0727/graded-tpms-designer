@@ -186,6 +186,9 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
 .legend .keys { display: flex; gap: 14px; }
 .legend .keys i { display: inline-block; width: 7px; height: 7px; margin-right: 6px; vertical-align: 0; }
 
+/* legend and dock stacked with a fixed gap, so a taller dock never runs into the legend */
+.brstack { position: absolute; right: 24px; bottom: 22px; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.brstack > .legend, .brstack > .dock { position: relative; right: auto; bottom: auto; left: auto; }
 .dock { position: absolute; right: 24px; bottom: 22px; display: grid; grid-template-columns: auto auto; gap: 10px 10px; justify-items: end; align-items: center; }
 .dock .val { grid-column: 1 / -1; display: grid; justify-items: end; gap: 3px; }
 .dock .val b { font: 500 22px/1 var(--f-cond); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
@@ -246,7 +249,8 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
   .dock { right: 18px; bottom: 18px; }
   .legend { right: 18px; }
   .readout { grid-template-columns: repeat(4, auto); bottom: 78px; gap: 0 10px; left: 12px; right: 12px; padding: 9px 12px; }
-  .dock { right: 12px; left: 12px; bottom: 12px; grid-template-columns: 1fr auto auto; padding: 10px 12px; }
+  .brstack { left: 12px; right: 12px; bottom: 12px; align-items: stretch; }
+  .dock { grid-template-columns: 1fr auto auto; padding: 10px 12px; }
   .dock .val { grid-column: 1; justify-items: start; } .dock .val small { display: none; } .dock .val b { font-size: 18px; white-space: nowrap; }
   .defbar { bottom: 168px; left: 12px; right: 12px; justify-items: stretch; }
   .defbar input[type=range] { width: 100%; }
@@ -479,7 +483,7 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
           <label class="chk"><input type="checkbox" id="cutOn"> Section cut at y =</label>
           <div class="slider"><input type="range" id="cutR" min="-1" max="1" step="0.01" aria-label="Section position"><input type="number" id="cut" step="0.5" aria-label="Section position y"></div>
           <label class="f">Finish
-            <select id="finish"><option value="studio">Studio · chrome, floor shadow</option><option value="matte">Matte · flat, for figures</option></select>
+            <select id="finish"><option value="studio">Studio · chrome, moving background</option><option value="matte">Matte · flat, for figures</option></select>
           </label>
           <label class="f">Render quality
             <select id="quality"><option value="fast">Fast</option><option value="balanced">Balanced</option><option value="sharp">Sharp</option></select>
@@ -597,6 +601,7 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
     </div>
     <div class="hint-bar"><span>Drag · orbit</span><span>Scroll · dolly</span><span>Right-drag · pan</span></div>
 
+    <div class="brstack">
     <div class="legend glass" id="legend">
       <span id="legTitle">Density ρ</span>
       <div class="bar" id="legBar"></div>
@@ -607,6 +612,7 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
       <div class="val" aria-live="polite"><b id="dockK">K —</b><small id="dockSrc">not solved yet</small></div>
       <button type="button" id="dockFE">Run FE</button>
       <button type="button" id="dockSTL">Export STL</button>
+    </div>
     </div>
   </main>
 </div>
@@ -1440,7 +1446,10 @@ vec3 studio(vec3 R, float shift){
 }
 float hash12(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 // deformed view: a point p of the deformed part came from q with q + s u(q) = p; two fixed-point steps invert it
-vec3 undef(vec3 p){ if (uDefS <= 0.0) return p; vec3 q = p; for (int i = 0; i < 3; i++) q = p - uDefS * texture(uDispT, (q - uDMin) / uDSize).xyz; return q; }
+// uUxLin = (a, b): a display-only u_x correction a + b x (rigid shift + uniform stretch along x) that keeps the part's bottom
+// contact on both supports, so the supports stay put and the part does not slide over them at the drawn scale
+uniform vec2 uUxLin;
+vec3 undef(vec3 p){ if (uDefS <= 0.0) return p; vec3 q = p; for (int i = 0; i < 3; i++) { vec3 u = texture(uDispT, (q - uDMin) / uDSize).xyz; u.x -= uUxLin.x + uUxLin.y * q.x; q = p - uDefS * u; } return q; }
 float dot2(vec2 v){ return dot(v, v); }
 float sdDom(vec3 p){
   if (uShape == 0) { vec3 q = abs(p) - uHalf; return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0); }
@@ -1539,18 +1548,8 @@ void main(){
   // Studio: the moving colour field is its own layer behind this canvas (shadergradient-style, see BGFX), so here the
   // background is transparent, apart from a light pool on the floor and the part's contact shadow (drei ContactShadows):
   // premultiplied (pool (1 - sh), sh) over the field gives (field + pool)(1 - sh).
+  // (no floor shadow: the user asked for it to be removed)
   vec3 poolC = vec3(0.0); float shA = 0.0; bool anyHit = false;
-  if (uFinish == 0) {
-    float zg = uBmin.z - 0.5;
-    if (rd.z < -1e-3 && ro.z > zg) {
-      vec3 P = ro + rd * ((zg - ro.z) / rd.z);
-      float d2 = (uShape == 3 || uShape == 4) ? length(P.xy) - uHalf.x : length(max(abs(P.xy) - uHalf.xy, 0.0)) + min(max(abs(P.x) - uHalf.x, abs(P.y) - uHalf.y), 0.0);
-      float gap = max(-uHalf.z - zg, 0.5), blur = 2.0 + 0.9 * gap;
-      float reach = 0.55 * max(uHalf.x, uHalf.y) + 12.0, pool = exp(-pow(max(d2, 0.0) / reach, 2.0));
-      poolC = vec3(0.070, 0.078, 0.092) * pool;
-      shA = (1.0 - smoothstep(-blur, blur * 1.6, d2)) * mix(0.80, 0.50, clamp(gap / 30.0, 0.0, 1.0));
-    }
-  }
   vec3 inv = 1.0 / rd;
   vec3 t0 = (uBmin - ro) * inv, t1 = (uBmax - ro) * inv, tmn = min(t0, t1), tmx = max(t0, t1);
   float tn = max(max(tmn.x, tmn.y), tmn.z), tf = min(min(tmx.x, tmx.y), tmx.z);
@@ -1618,7 +1617,7 @@ const UNIFORMS = ['uRes', 'uCamPos', 'uCamFwd', 'uCamRight', 'uCamUp', 'uFov', '
   'uSkin', 'uShift', 'uCut', 'uCutOn', 'uSheet', 'uMaxSteps', 'uColor', 'uBg', 'uCellRange', 'uLN', 'uLS', 'uStepK',
   'uCellMode', 'uFmin', 'uFmax', 'uCsh', 'uKmod', 'uSMean', 'uDmax', 'uFX', 'uFF', 'uNF', 'uM0', 'uFixX', 'uFix', 'uLA',
   'uPads', 'uPw', 'uPt', 'uTop', 'uNTop', 'uBot', 'uNBot', 'uMarks', 'uRoll', 'uBmin', 'uBmax',
-  'uTpms', 'uGrad', 'uRhoG', 'uRhoGOn', 'uSharp', 'uLining', 'uDispT', 'uEnT', 'uDefS', 'uDrop', 'uFeOn', 'uTopU', 'uBotU', 'uDMin', 'uDSize', 'uEMin', 'uESize', 'uFinish'];
+  'uTpms', 'uGrad', 'uRhoG', 'uRhoGOn', 'uSharp', 'uLining', 'uDispT', 'uEnT', 'uDefS', 'uDrop', 'uFeOn', 'uTopU', 'uBotU', 'uUxLin', 'uDMin', 'uDSize', 'uEMin', 'uESize', 'uFinish'];
 let prog = null, U = {}, vao = null, glOK = !!gl;
 function buildProgram(rhoGL, cellGL) {
   const mk = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
@@ -1725,10 +1724,14 @@ function frame0() {
   gl.uniform1f(U.uM0, LC.M0); gl.uniform1f(U.uFixX, LC.fixX); gl.uniform1i(U.uFix, LC.fix ? 1 : 0);
   gl.uniform1fv(U.uLA, core.th);
   const top = [0, 0], bot = [0, 0]; LC.tops.forEach((v, i) => top[i] = v); LC.bots.forEach((v, i) => bot[i] = v);
-  const tu = [0, 0, 0, 0], bu = [0, 0, 0, 0];
-  if (feField) { LC.tops.forEach((x, i) => { const u = contactU(x, P.half[2]); tu[2 * i] = u[0]; tu[2 * i + 1] = u[1]; });
-    LC.bots.forEach((x, i) => { const u = contactU(x, -P.half[2]); bu[2 * i] = u[0]; bu[2 * i + 1] = u[1]; }); }
-  gl.uniform2fv(U.uTopU, tu); gl.uniform2fv(U.uBotU, bu);
+  // supports stay where they are; with two supports, a + b x is taken out of u_x so both contacts sit on their rollers
+  const tu = [0, 0, 0, 0], bu = [0, 0, 0, 0]; let la = 0, lb = 0;
+  if (feField) {
+    if (LC.bots.length === 2) { const u1 = contactU(LC.bots[0], -P.half[2])[0], u2 = contactU(LC.bots[1], -P.half[2])[0];
+      lb = (u2 - u1) / ((LC.bots[1] - LC.bots[0]) || 1); la = u1 - lb * LC.bots[0]; }
+    LC.tops.forEach((x, i) => { const u = contactU(x, P.half[2]); tu[2 * i] = u[0] - (la + lb * x); tu[2 * i + 1] = u[1]; });
+  }
+  gl.uniform2fv(U.uTopU, tu); gl.uniform2fv(U.uBotU, bu); gl.uniform2f(U.uUxLin, la, lb);
   gl.uniform1i(U.uPads, Ld.pads ? 1 : 0); gl.uniform1f(U.uPw, Ld.pw); gl.uniform1f(U.uPt, Ld.pt);
   gl.uniform1fv(U.uTop, top); gl.uniform1i(U.uNTop, LC.tops.length); gl.uniform1fv(U.uBot, bot); gl.uniform1i(U.uNBot, LC.bots.length);
   const R = Math.max(1.5, Math.min(5, 0.35 * P.half[2])), marksOn = Ld.show && !LC.err;
@@ -1831,11 +1834,13 @@ void main(){
 }`;
   const MARK = `#version 300 es
 precision highp float; uniform float uT; uniform vec2 uR; out vec4 o;${NOISE}
+// one period of a sine (a gyroid section line), a thick round-capped stroke
 float sdMark(vec2 p){
-  vec3 X = vec3(p * 17.0, 0.9);
-  float G = sin(X.x) * cos(X.y) + sin(X.y) * cos(X.z) + sin(X.z) * cos(X.x);
-  float body = max(length(p) - 0.40, (G - 0.2) / (17.0 * 1.35));
-  return min(body, abs(length(p) - 0.43) - 0.035);
+  const float L = 0.34, A = 0.14, k = 3.14159265 / 0.34, w = 0.085;
+  float x = clamp(p.x, -L, L), y = A * sin(k * x), sl = A * k * cos(k * x);
+  float d = abs(p.y - y) / sqrt(1.0 + sl * sl);
+  if (abs(p.x) > L) d = length(p - vec2(sign(p.x) * L, A * sin(k * sign(p.x) * L)));
+  return d - w;
 }
 float strip(float x){ x = fract(x); const float b = 0.012;
   float v = mix(0.10, 0.98, smoothstep(0.0, b, x));

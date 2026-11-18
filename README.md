@@ -38,7 +38,7 @@ A single-page browser tool for designing graded TPMS lattices (gyroid, Schwarz P
   - *Sharp hole edges* cuts each hole cleanly instead, with an optional lining wall.
   - Clean cuts cost stiffness because of the truncated-cell boundary effect: 3-point gyroid 272 vs 340 N/mm with tapered holes. The page footnote and the 11-11 journal have the full table.
   - PNG figures: the 3D view at 2× resolution (Side + Ortho gives the paper-style side view), plus the energy map and the density map.
-- **View finish:** *Studio* (chrome studio-strip reflections, floor shadow) or *Matte* (flat, for figures).
+- **View finish:** *Studio* (chrome studio-strip reflections, moving background) or *Matte* (flat, for figures).
 - **FE checks:** before a run the page counts how much of the material stays in one piece at the chosen voxel size; below 70 % it does not solve and offers 0.5 mm voxels (sheet walls under 1 mm need it).
 
 The equations are listed in the page's **Method** section.

@@ -1,0 +1,8 @@
+# backups and superseded data (kept locally only)
+_*.html
+fe_core_v*.js
+preload_fe_v*.json
+# local copy: index.html is the same page
+gyroid_designer_local.html
+.playwright-mcp/
+__pycache__/

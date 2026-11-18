@@ -8,7 +8,7 @@
 #   rail      top face at z = 0, centred, 200 long (the page stretches it in x to fit the span)
 #   support   the anvil's contact line at z = 0 (the beam's underside), the foot on the rail at z = -50; the upright stands
 #             on the -x side of the contact (the page mirrors the part for the support on the +x side)
-#   nose      the loading edge at z = 0 (the beam's top face), the block up to z = +56
+#   nose      the loading edge at z = 0 (the beam's top face), a slim plate up to z = 64 and a clamp block to z = 76
 #   head      knurled nut and shank, from z = 0 (the top of the nose)
 #   bar       a spreader for 4-point loading, bottom at z = 0, 100 long (stretched in x)
 #   pedestal  under the rail, top at z = 0
@@ -140,23 +140,27 @@ thumb = join([knurl(5.5, 6, (-23, 13, -40 + 3)), cyl(3, 4, (-23, 13, -40 - 1), v
 ring = bail(-13.2, -24, r=8.5, t=0.9)
 keep('support', [(sup, STEEL), (thumb, POLISH), (ring, POLISH)])
 
-# ---------------- nose: block (44 x 40 x 26) with a side cap screw, V wedge (60 deg) to an R3 loading edge at z = 0 ----------------
-arc = [(3 * math.cos(a), 3 + 3 * math.sin(a)) for a in [(-30 - i * 120 / 16) * D2R for i in range(17)]]
-wedge = prism_xz([(14, 30), (14, 16.0)] + arc + [(-14, 16.0), (-14, 30)], 40)
-bevel(wedge, 0.6, segs=2, angle=50)
-block = box(44, 40, 26, (0, 0, 30 + 13), bv=1.4)
-boolean(block, cyl(2.5, 50, (8, 0, 47), axis='Y', verts=24, bv=0))   # a cross hole through the block
-screw = cap_screw(22, 6, 46, r=3.6, h=4, axis='X', sign=1)
-keep('nose', [(join([wedge, block]), STEEL), (screw, BLACK)])
+# ---------------- nose: a slim tapered plate (as in the photo): 30 wide, 64 high, 20 thick, flanks 15 deg off vertical
+#                  down to an R2 loading edge at z = 0; a small clamp block on top with a knurled side knob ----------------
+r, th = 2.0, 15 * D2R
+arc = [(r * math.cos(a), r + r * math.sin(a)) for a in [(-15 - i * 150 / 18) * D2R for i in range(19)]]
+zf = r - r * math.sin(th) + (15 - r * math.cos(th)) / math.tan(th)        # where the flank reaches the full half width 15
+plate = prism_xz([(15, 64), (15, zf)] + arc + [(-15, zf), (-15, 64)], 20)
+bevel(plate, 0.7, segs=2, angle=50)
+boolean(plate, cyl(2.2, 30, (0, 0, 56), axis='Y', verts=24, bv=0))       # cross hole near the top, as on the photo
+clamp = box(24, 22, 12, (0, 0, 64 + 6), bv=1.0)
+side = join([knurl(4.6, 6, (0, 0, 0), ridges=40, depth=0.5), cyl(2.4, 3, (0, 0, -4.5), verts=24, bv=0)])
+for v in side.data.vertices: x, z = v.co.x, v.co.z; v.co.x, v.co.z = z, x   # axis z -> x
+side.location = (12 + 4.5, 0, 70); sel(side); bpy.ops.object.transform_apply(location=True)
+keep('nose', [(join([plate, clamp]), STEEL), (side, POLISH)])
 
-# ---------------- head: knurled nut, collar, shank with a flat and a cross hole, chamfered top ----------------
-nut = knurl(14, 11, (0, 0, 5.5), ridges=72, depth=0.8)
-collar = cyl(10, 4, (0, 0, 13), verts=48, bv=0.5)
-shank = cyl(8, 44, (0, 0, 15 + 22), verts=64, bv=1.0, segs=3)
-boolean(shank, box(10, 30, 26, (8 + 5 - 1.6, 0, 40), bv=0))       # the flat on one side
-boolean(shank, cyl(2.6, 30, (0, 0, 46), axis='Y', verts=24, bv=0))  # cross hole
-setscrew = cap_screw(-13.5, 0, 6, r=2.6, h=2.5, axis='X', sign=-1)
-keep('head', [(join([nut, collar, shank]), POLISH), (setscrew, BLACK)])
+# ---------------- head: knurled nut, collar, shank with a flat and a cross hole (slimmer, as on the photo), from z = 0 ----------------
+nut = knurl(10, 8, (0, 0, 4), ridges=60, depth=0.6)
+collar = cyl(7, 3, (0, 0, 9.5), verts=48, bv=0.4)
+shank = cyl(6, 38, (0, 0, 11 + 19), verts=64, bv=0.9, segs=3)
+boolean(shank, box(8, 24, 22, (6 + 4 - 1.3, 0, 34), bv=0))        # the flat on one side
+boolean(shank, cyl(2.0, 24, (0, 0, 38), axis='Y', verts=24, bv=0))  # cross hole
+keep('head', [(join([nut, collar, shank]), POLISH)])
 
 # ---------------- bar: a stainless spreader for 4-point loading ----------------
 bar = box(100, 42, 14, (0, 0, 7), bv=1.4)

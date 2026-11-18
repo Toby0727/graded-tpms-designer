@@ -8,7 +8,7 @@
 #   rail      top face at z = 0, centred, 200 long (the page stretches it in x to fit the span)
 #   support   the anvil's contact line at z = 0 (the beam's underside), the foot on the rail at z = -50; the upright stands
 #             on the -x side of the contact (the page mirrors the part for the support on the +x side)
-#   nose      a flat plate, the loading edge (a rounded corner) at x = 0, z = 0; plate centre x = -10, top z = 46
+#   nose      a rectangle with a semicircle under it, the loading edge at x = 0, z = 0, top z = 46
 #   head      knurled nut and shank, from z = 0 (placed on the plate's top, at the plate centre)
 #   bar       a spreader for 4-point loading, bottom at z = 0, 100 long (stretched in x)
 #   pedestal  under the rail, top at z = 0
@@ -140,17 +140,15 @@ thumb = join([knurl(5.5, 6, (-23, 13, -40 + 3)), cyl(3, 4, (-23, 13, -40 - 1), v
 ring = bail(-13.2, -24, r=8.5, t=0.9)
 keep('support', [(sup, STEEL), (thumb, POLISH), (ring, POLISH)])
 
-# ---------------- nose (as on the photo): a flat plate in the x-z plane, 12 thick (y), 30 wide, 46 high; the lower-left corner
-#                  cut by a 45 deg chamfer, the lower-right corner rounded (R 5); the lowest point of that round is the loading
-#                  edge at x = 0, z = 0 (it runs along y, across the specimen). The plate's centre line is at x = -10. ----------------
-R = 5.0
-corner = [(R * math.cos(a), R + R * math.sin(a)) for a in [(0 - i * 90 / 16) * D2R for i in range(17)]]   # (5,5) .. (0,0)
-prof = [(5, 46), (5, 5)] + corner[1:] + [(-6, 0), (-25, 19), (-25, 46)]
-plate = prism_xz(prof, 12)
-bevel(plate, 0.8, segs=2, angle=50)
+# ---------------- nose: a rectangle with a semicircle under it (the user's spec): 12 wide (x), 46 high, a full R6 round at the
+#                  bottom whose lowest line (along y) is the loading edge at x = 0, z = 0; 12 thick in y (the page scales it) ----------------
+R = 6.0
+semi = [(R * math.cos(a), R + R * math.sin(a)) for a in [(0 - i * 180 / 32) * D2R for i in range(33)]]   # (6,6) .. (0,0) .. (-6,6)
+plate = prism_xz([(R, 46)] + semi + [(-R, 46)], 12)
+bevel(plate, 0.6, segs=2, angle=50)
 keep('nose', [(plate, STEEL)])
 
-# ---------------- head (centred on the plate, x = -10 in the nose frame): knurled nut on the plate's top, a radial set screw in
+# ---------------- head (centred over the nose): knurled nut on the plate's top, a radial set screw in
 #                  the nut's side, a plain shank with a cross hole and a chamfered top ----------------
 nut = knurl(11, 9, (0, 0, 4.5), ridges=64, depth=0.6)
 boolean(nut, cyl(1.6, 8, (8, -8, 4.5), axis='Y', verts=16, bv=0))        # the set-screw hole

@@ -26,7 +26,7 @@ A single-page browser tool for designing graded TPMS lattices (gyroid, Schwarz P
   - fmin/fmax driven by the beam-theory stress;
   - the 7-number M2 "nodes" field with a Nelder–Mead search.
   - The phase-Jacobian rules (cell range, det ≥ 0.3, aspect cap) are checked.
-- **Load cases:** 3-point, 4-point, cantilever, with positions you choose.
+- **Load cases:** 3-point and 4-point bending, with positions you choose.
 - **Quick FE:** PLA E = 2900 MPa, ν = 0.36, rigid-roller contact, K = reaction / 0.1 mm.
   - It shows the energy-per-gram map, its deviation, the deformed shape (scaled) and the FE energy as colour.
 - **FE redesign:** the energy-per-gram loop ρ ← clamp(ρ (w/w̄)^η, ρmin, ρmax) on 28 × 12 x–z boxes, with an optional holes step.
@@ -82,6 +82,5 @@ Keep the total number of workers at or below the number of physical cores you wa
 |---|---|---|---|---|
 | 3-point, 168 × 16 × 24, 40 g | 153.8 | 303.8 (×1.94) | 340.0 (×2.15) | 453.3 (×2.90) |
 | 4-point | 217.1 | 426.8 (×1.92) | 467.3 (×2.10) | 644.1 (×2.92) |
-| cantilever 120 mm, 28.6 g | 21.0 | 42.4 (×1.99) | 41.6 (×1.98) | 61.4 (×2.93) |
 
-K in N/mm; × is K per gram against the uniform beam of the same load. Open an example directly with `#name`, for example `#optM2`, `#optM2_4`, `#optM2_C`.
+K in N/mm; × is K per gram against the uniform beam of the same load. Open an example directly with `#name`, for example `#optM2`, `#optM2_4`, `#beam4`.

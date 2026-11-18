@@ -24,7 +24,10 @@ page.write_text(body, encoding='utf-8')
 head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
         '<style>body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body>')
-full = head.replace('<style>', '<title>Graded TPMS Lattice Designer</title><style>') + body + '</body></html>'
+icon = ("<link rel=\"icon\" href=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+        "%3Crect width='32' height='32' rx='6' fill='%2305060a'/%3E%3Cpath d='M4 16c4-8 8-8 12 0s8 8 12 0' fill='none' "
+        "stroke='%239fb6c8' stroke-width='3'/%3E%3C/svg%3E\">")
+full = head.replace('<style>', '<title>Graded TPMS Lattice Designer</title>' + icon + '<style>') + body + '</body></html>'
 (here / 'gyroid_designer_local.html').write_text(full, encoding='utf-8')
 # 4. index.html: the same full document, served by the website (Cloudflare Pages, deployed from the GitHub repo)
 (here / 'index.html').write_text(full, encoding='utf-8')

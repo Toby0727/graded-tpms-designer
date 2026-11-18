@@ -1,5 +1,7 @@
 # Graded TPMS Lattice Designer
 
+**Live:** https://graded-tpms-designer.hpang05.workers.dev
+
 A single-page browser tool for designing graded TPMS lattices (gyroid, Schwarz P, Diamond) in a given part shape and load case. It checks each design with a quick voxel FE in the browser and exports a closed mesh (3MF or STL) for 3D printing. Nothing needs to be installed: open the HTML file in Chrome, Edge, Firefox or Safari (WebGL2 is needed for the 3D view).
 
 ## Files

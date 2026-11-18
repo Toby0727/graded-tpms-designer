@@ -1,0 +1,7 @@
+# files in the repo that the website does not serve
+.git
+.gitignore
+.assetsignore
+wrangler.jsonc
+.wrangler
+node_modules

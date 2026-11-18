@@ -40,6 +40,8 @@ body { background: var(--void); color: var(--ink); font: 400 12px/1.55 var(--f-m
 .title .brand b { color: var(--ink); font-weight: 500; }
 .title h1 { margin: 0; font: 600 30px/0.95 var(--f-cond); letter-spacing: -0.01em; text-transform: uppercase; color: var(--ink); }
 .title h1 span { color: var(--mute); font-weight: 400; }
+.headline { display: flex; align-items: center; gap: 14px; }
+#mark { width: 58px; height: 58px; flex: none; display: block; }
 .tb { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 2px 12px; }
 .tb dt { color: var(--dim); } .tb dd { margin: 0; color: var(--mute); grid-row: 2; font-variant-numeric: tabular-nums; }
 .counters { display: flex; gap: 12px; white-space: nowrap; }
@@ -134,6 +136,7 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
 
 /* stage */
 .stage { position: relative; min-height: 0; overflow: hidden; container-type: size; container-name: stage; }
+.stage canvas#bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .stage canvas#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .stage canvas#gl:active { cursor: grabbing; }
 .crop { position: absolute; width: 11px; height: 11px; pointer-events: none; opacity: 0.6; }
@@ -187,17 +190,23 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
 .dock .val { grid-column: 1 / -1; display: grid; justify-items: end; gap: 3px; }
 .dock .val b { font: 500 22px/1 var(--f-cond); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 .dock .val small { color: var(--dim); }
-.dock button { display: inline-flex; align-items: center; gap: 0.6em; color: var(--ink); background: transparent; border: 1px solid var(--line); padding: 0.75em 1.05em; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+.dock button { display: inline-flex; align-items: center; gap: 0.6em; white-space: nowrap; color: var(--ink); background: transparent; border: 1px solid var(--line); padding: 0.75em 1.05em; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
 .dock button::after { content: "→"; letter-spacing: 0; }
 .dock button:hover { border-color: var(--steel); color: var(--steel); }
 .dock button:disabled { color: var(--dim); cursor: progress; }
 
 /* liquid glass (after shuding/liquid-glass and ybouane/liquidglass): frosted panels over the 3D view whose rim bends what is behind.
    The rim bend is an SVG displacement map, added by script where backdrop-filter takes url() (Chromium); other browsers get the frost. */
-.glass { border-radius: 14px; padding: 12px 16px;
-  background: linear-gradient(180deg, rgba(236, 240, 246, 0.07), rgba(236, 240, 246, 0.02) 55%, rgba(236, 240, 246, 0.035));
-  -webkit-backdrop-filter: blur(9px) saturate(1.35) brightness(1.05); backdrop-filter: blur(9px) saturate(1.35) brightness(1.05);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.17), inset 0 -1px 0 rgba(255, 255, 255, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.07), 0 14px 34px -16px rgba(0, 0, 0, 0.75); }
+.glass { border-radius: 16px; padding: 12px 16px;
+  background: linear-gradient(160deg, rgba(240, 244, 250, 0.13), rgba(240, 244, 250, 0.03) 38%, rgba(240, 244, 250, 0.015) 62%, rgba(240, 244, 250, 0.07));
+  -webkit-backdrop-filter: blur(4px) saturate(1.7) brightness(1.12); backdrop-filter: blur(4px) saturate(1.7) brightness(1.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), inset 1px 0 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -14px 24px -18px rgba(255, 255, 255, 0.16), 0 18px 40px -18px rgba(0, 0, 0, 0.8); }
+/* specular rim: a bright sweep from the top-left corner round the edge, like light caught in a thick glass lens */
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.2px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.10) 28%, rgba(255, 255, 255, 0) 52%, rgba(190, 214, 235, 0.22) 78%, rgba(255, 255, 255, 0.45));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.viewbar.glass { position: relative; }
 .glass.pill { border-radius: 999px; padding: 6px 18px; }
 .viewbar.glass { gap: 18px; }
 .defbar.glass { padding: 9px 20px 8px; border-radius: 18px; }
@@ -238,7 +247,7 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
   .legend { right: 18px; }
   .readout { grid-template-columns: repeat(4, auto); bottom: 78px; gap: 0 10px; left: 12px; right: 12px; padding: 9px 12px; }
   .dock { right: 12px; left: 12px; bottom: 12px; grid-template-columns: 1fr auto auto; padding: 10px 12px; }
-  .dock .val { grid-column: 1; justify-items: start; } .dock .val small { display: none; }
+  .dock .val { grid-column: 1; justify-items: start; } .dock .val small { display: none; } .dock .val b { font-size: 18px; white-space: nowrap; }
   .defbar { bottom: 168px; left: 12px; right: 12px; justify-items: stretch; }
   .defbar input[type=range] { width: 100%; }
   #legend { display: none; }
@@ -255,7 +264,7 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
   <aside class="rail" id="rail">
     <header class="title">
       <div class="brand mono"><b>TPMS lattice</b><span class="counters"><button type="button" class="hbtn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button><button type="button" class="hbtn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>Redo</button><a href="#feSec" id="libLink" title="FE results solved in advance">FE [ 0 ]</a></span></div>
-      <h1>Graded gyroid <span>designer</span></h1>
+      <div class="headline"><canvas id="mark" aria-hidden="true"></canvas><h1>Graded gyroid <span>designer</span></h1></div>
       <dl class="tb mono"><dt>Material</dt><dd>PLA 1.24 g/cm³</dd><dt>Units</dt><dd>mm · N</dd><dt>Solver</dt><dd>voxel FE</dd></dl>
     </header>
 
@@ -521,6 +530,7 @@ table.kvt tbody tr[aria-current="true"] td { color: var(--steel); }
   </aside>
 
   <main class="stage" id="bench">
+    <canvas id="bg" aria-hidden="true"></canvas>
     <canvas id="gl" aria-label="3D view of the graded gyroid. Drag to turn, scroll to zoom, right-drag to pan."></canvas>
     <i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i>
 
@@ -1420,10 +1430,12 @@ out vec4 o;
 vec3 studio(vec3 R, float shift){
   float a = dot(R, uCamUp) + 0.28 * dot(R, uCamRight) + shift;
   // wide, soft-edged bands: the struts are small and curved, so thin hard strips would only glitter
-  float s = 0.85 * smoothstep(0.14, 0.0, abs(a - 0.80) - 0.07)
-          + 0.45 * smoothstep(0.22, 0.0, abs(a - 0.38) - 0.12)
-          + 0.16 * smoothstep(0.26, 0.0, abs(a + 0.36) - 0.14);
-  return vec3(0.010, 0.012, 0.016) + vec3(0.085, 0.10, 0.12) * smoothstep(-0.3, 1.0, a) + vec3(0.93, 0.96, 1.0) * s;
+  float s = 1.30 * smoothstep(0.12, 0.0, abs(a - 0.80) - 0.07)
+          + 0.62 * smoothstep(0.20, 0.0, abs(a - 0.36) - 0.11)
+          + 0.22 * smoothstep(0.24, 0.0, abs(a + 0.38) - 0.12);
+  // dark gaps between the strips give the liquid-metal contrast; a faint cool sky above, a warm floor bounce below
+  return vec3(0.006, 0.007, 0.010) + vec3(0.06, 0.075, 0.095) * smoothstep(-0.2, 1.0, a) + vec3(0.05, 0.03, 0.02) * smoothstep(0.0, -0.8, a)
+       + vec3(0.95, 0.97, 1.0) * s;
 }
 float hash12(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
 // deformed view: a point p of the deformed part came from q with q + s u(q) = p; two fixed-point steps invert it
@@ -1520,23 +1532,20 @@ void main(){
   if (uOrtho == 1) { ro = uCamPos + (uCamRight * uv.x + uCamUp * uv.y) * uOrthoH; rd = uCamFwd; }
   else { ro = uCamPos; rd = normalize(uCamFwd + (uCamRight * uv.x + uCamUp * uv.y) * uFov); }
   vec3 col = uBg + vec3(0.030, 0.034, 0.044) * max(0.0, 1.0 - 0.42 * dot(uv, uv));
+  // Studio: the moving colour field is its own layer behind this canvas (shadergradient-style, see BGFX), so here the
+  // background is transparent, apart from a light pool on the floor and the part's contact shadow (drei ContactShadows):
+  // premultiplied (pool (1 - sh), sh) over the field gives (field + pool)(1 - sh).
+  vec3 poolC = vec3(0.0); float shA = 0.0; bool anyHit = false;
   if (uFinish == 0) {
-    // shadergradient-style field: two very soft colour pools (cool behind the part, warm low left), static, plus grain against banding
-    vec2 a = uv - vec2(0.25, 0.30), b = uv - vec2(-1.10, -0.95);
-    col = uBg + vec3(0.040, 0.048, 0.062) * exp(-0.9 * dot(a, a)) + vec3(0.026, 0.019, 0.014) * exp(-1.4 * dot(b, b));
-    // contact shadow, as drei's ContactShadows: the part's footprint, blurred by its height above a floor under everything
     float zg = uBmin.z - 0.5;
     if (rd.z < -1e-3 && ro.z > zg) {
       vec3 P = ro + rd * ((zg - ro.z) / rd.z);
       float d2 = (uShape == 3 || uShape == 4) ? length(P.xy) - uHalf.x : length(max(abs(P.xy) - uHalf.xy, 0.0)) + min(max(abs(P.x) - uHalf.x, abs(P.y) - uHalf.y), 0.0);
       float gap = max(-uHalf.z - zg, 0.5), blur = 2.0 + 0.9 * gap;
-      // a soft pool of light on the floor around the part (a shadow on black would not show), then the shadow in it
       float reach = 0.55 * max(uHalf.x, uHalf.y) + 12.0, pool = exp(-pow(max(d2, 0.0) / reach, 2.0));
-      col += vec3(0.064, 0.070, 0.082) * pool;
-      float sh = (1.0 - smoothstep(-blur, blur * 1.6, d2)) * mix(0.75, 0.45, clamp(gap / 30.0, 0.0, 1.0));
-      col *= 1.0 - sh;
+      poolC = vec3(0.070, 0.078, 0.092) * pool;
+      shA = (1.0 - smoothstep(-blur, blur * 1.6, d2)) * mix(0.80, 0.50, clamp(gap / 30.0, 0.0, 1.0));
     }
-    col += (hash12(gl_FragCoord.xy) - 0.5) * (2.0 / 255.0);
   }
   vec3 inv = 1.0 / rd;
   vec3 t0 = (uBmin - ro) * inv, t1 = (uBmax - ro) * inv, tmn = min(t0, t1), tmx = max(t0, t1);
@@ -1555,6 +1564,7 @@ void main(){
       if (t > tf) break;
     }
     if (hit) {
+      anyHit = true;
       vec3 p = ro + rd * t;
       float e = max(0.02, pix * 0.5);
       float s1 = scene(p + k.xyy * e, rho, cs, st, kind), s2 = scene(p + k.yyx * e, rho, cs, st, kind), s3 = scene(p + k.yxy * e, rho, cs, st, kind), s4 = scene(p + k.xxx * e, rho, cs, st, kind);
@@ -1586,16 +1596,16 @@ void main(){
         vec3 c = lin * dif * ao * 0.60 + (env * mix(lin * 1.5 + 0.03, vec3(1.0), F * 0.55) * 0.60 + spec) * ao;
         if (uFinish == 0) {
           // chrome: the strips reflected, tinted by the data colour; red and blue read the strips a little apart at grazing angles (dispersion)
-          float dsp = 0.035 * fr;
+          float dsp = 0.02 + 0.06 * fr;
           vec3 envS = vec3(studio(R, dsp).r, studio(R, 0.0).g, studio(R, -dsp).b);
           vec3 tint = mix(lin * 1.7 + 0.04, vec3(1.0), 0.30 + 0.55 * fr);
-          c = lin * dif * ao * 0.56 + envS * tint * ao * 0.72 + spec * 0.7 * ao;
+          c = lin * dif * ao * 0.48 + envS * tint * ao * 0.92 + spec * 0.7 * ao;
         }
         col = pow(c, vec3(1.0 / 2.2));
       }
     }
   }
-  o = vec4(col, 1.0);
+  o = (uFinish == 0 && !anyHit) ? vec4(poolC * (1.0 - shA), shA) : vec4(col, 1.0);
 }`; }
 
 const UNIFORMS = ['uRes', 'uCamPos', 'uCamFwd', 'uCamRight', 'uCamUp', 'uFov', 'uOrtho', 'uOrthoH', 'uShape', 'uDim', 'uHalf', 'uStretch',
@@ -1748,7 +1758,7 @@ const GLASS = (() => {
     if (!it) {
       const id = 'lg' + (++n), f = mk('filter', { id, x: 0, y: 0, filterUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' }, svg);
       const img = mk('feImage', { result: 'map', x: 0, y: 0, preserveAspectRatio: 'none' }, f);
-      const d = [1.08, 1.0, 0.92].map((k, i) => mk('feDisplacementMap', { in: 'SourceGraphic', in2: 'map', xChannelSelector: 'R', yChannelSelector: 'G', result: 'd' + i }, f));
+      const d = [1.07, 1.0, 0.93].map((k, i) => mk('feDisplacementMap', { in: 'SourceGraphic', in2: 'map', xChannelSelector: 'R', yChannelSelector: 'G', result: 'd' + i }, f));
       ['1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0', '0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0', '0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0']
         .forEach((v, i) => mk('feColorMatrix', { in: 'd' + i, type: 'matrix', values: v, result: 'c' + i }, f));
       mk('feComposite', { in: 'c0', in2: 'c1', operator: 'arithmetic', k2: 1, k3: 1, result: 'c01' }, f);
@@ -1758,7 +1768,7 @@ const GLASS = (() => {
     if (it.w === w && it.h === h) return;
     it.w = w; it.h = h;
     const rad = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, w / 2, h / 2);
-    const band = Math.max(4, Math.min(14, 0.42 * h)), mx = Math.min(10, 0.3 * h);
+    const band = Math.max(6, Math.min(24, 0.45 * h)), mx = Math.min(16, 0.36 * h);
     const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const cx = cv.getContext('2d'), im = cx.createImageData(w, h), D = im.data, hx = w / 2, hy = h / 2;
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
@@ -1775,12 +1785,106 @@ const GLASS = (() => {
     it.f.setAttribute('width', w); it.f.setAttribute('height', h);
     it.img.setAttribute('width', w); it.img.setAttribute('height', h);
     it.img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', cv.toDataURL()); it.img.setAttribute('href', cv.toDataURL());
-    it.d.forEach((e, i) => e.setAttribute('scale', (2 * mx * [1.08, 1.0, 0.92][i]).toFixed(2)));
-    el.style.backdropFilter = `url(#${it.id}) blur(9px) saturate(1.35) brightness(1.05)`;
+    it.d.forEach((e, i) => e.setAttribute('scale', (2 * mx * [1.07, 1.0, 0.93][i]).toFixed(2)));
+    el.style.backdropFilter = `url(#${it.id}) blur(2.5px) saturate(1.7) brightness(1.12)`;
   }
   let raf = 0; const pend = new Set();
   const ro = new ResizeObserver(es => { for (const e of es) pend.add(e.target); if (!raf) raf = requestAnimationFrame(() => { raf = 0; for (const el of pend) build(el); pend.clear(); }); });
   return { watch(els) { for (const el of els) { build(el); ro.observe(el); } } };
+})();
+
+// ---------- moving colour field (after ruucm/shadergradient) and the liquid-metal mark (after paper-design/liquid-logo) ----------
+// Both are small WebGL2 canvases with their own loop at about 30 fps, so the ray-marched part still draws only on demand.
+// The field: domain-warped fbm read as a height field and lit like shadergradient's displaced plane, plus grain.
+// The mark: a coin cut by a gyroid slice, shaded as liquid metal: moving stripes bent by a bulge and by the distance to the
+// outline, with red and blue reading the stripes a little apart toward the edge. Our own code, the same idea as liquid-logo.
+const BGFX = (() => {
+  const VSRC = `#version 300 es
+void main(){ vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
+  const NOISE = `
+float h21(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
+float fbm(vec2 p){ float s = 0.0, a = 0.5; mat2 m = mat2(1.6, 1.2, -1.2, 1.6); for (int i = 0; i < 5; i++) { s += a * vn(p); p = m * p; a *= 0.5; } return s; }`;
+  const FIELD = `#version 300 es
+precision highp float; uniform float uT; uniform vec2 uR; out vec4 o;${NOISE}
+float field(vec2 p, float t){ vec2 q = vec2(fbm(p + vec2(0.0, t)), fbm(p + vec2(5.2, 1.3) - t)); return fbm(p + 1.7 * q + vec2(0.6 * t, 0.0)); }
+void main(){
+  vec2 p = (gl_FragCoord.xy - 0.5 * uR) / uR.y, sp = p * 1.2 + vec2(0.0, 0.25);
+  float t = uT * 0.035, n = field(sp, t);
+  float nx = field(sp + vec2(0.012, 0.0), t) - n, ny = field(sp + vec2(0.0, 0.012), t) - n;
+  vec3 N = normalize(vec3(-nx * 55.0, -ny * 55.0, 1.0));
+  float lit = clamp(dot(N, normalize(vec3(-0.45, 0.55, 0.7))), 0.0, 1.0);
+  vec3 c0 = vec3(0.016, 0.019, 0.028), c1 = vec3(0.055, 0.092, 0.135), c2 = vec3(0.17, 0.075, 0.045), c3 = vec3(0.45, 0.56, 0.66);
+  vec3 col = mix(c0, c1, smoothstep(0.28, 0.78, n));
+  col = mix(col, c2, smoothstep(0.52, 0.86, n) * smoothstep(0.35, -0.7, p.x - p.y) * 0.85);
+  col += c3 * pow(lit, 5.0) * smoothstep(0.30, 0.80, n) * 0.26;
+  col *= 1.0 - 0.30 * dot(p, p);
+  col += (h21(gl_FragCoord.xy) - 0.5) * 0.03;
+  o = vec4(max(col, 0.0), 1.0);
+}`;
+  const MARK = `#version 300 es
+precision highp float; uniform float uT; uniform vec2 uR; out vec4 o;${NOISE}
+float sdMark(vec2 p){
+  vec3 X = vec3(p * 17.0, 0.9);
+  float G = sin(X.x) * cos(X.y) + sin(X.y) * cos(X.z) + sin(X.z) * cos(X.x);
+  float body = max(length(p) - 0.40, (G - 0.2) / (17.0 * 1.35));
+  return min(body, abs(length(p) - 0.43) - 0.035);
+}
+float strip(float x){ x = fract(x); const float b = 0.012;
+  float v = mix(0.10, 0.98, smoothstep(0.0, b, x));
+  v = mix(v, 0.10, smoothstep(0.11 - b, 0.11 + b, x));
+  v = mix(v, 0.80, smoothstep(0.17 - b, 0.17 + b, x));
+  v = mix(v, 0.08, smoothstep(0.22 - b, 0.22 + b, x));
+  float g = smoothstep(0.24, 1.0, x); return mix(v, mix(0.08, 0.95, g * g), smoothstep(0.22, 0.32, x)); }
+void main(){
+  vec2 uv = gl_FragCoord.xy / uR, p = uv - 0.5;
+  float sd = sdMark(p), px = 1.0 / uR.y, a = 1.0 - smoothstep(-px, px, sd);
+  if (a <= 0.0) { o = vec4(0.0); return; }
+  float edge = clamp(1.0 + sd / 0.06, 0.0, 1.0), t = uT * 0.05;
+  float nz = vn(uv * 3.0 - t) - 0.5, diag = uv.x - uv.y;
+  float bulge = 1.0 - pow(clamp(1.9 * length(p + vec2(0.0, 0.08 * diag)), 0.0, 1.0), 1.3);
+  float ed = edge + (1.0 - edge) * 0.35 * nz;
+  float dir = (0.75 * uv.y + 0.4 * diag) * (0.45 + (1.1 - ed) * bulge) + 0.3 * ed * ed + 0.15 * nz;
+  dir = 2.0 * dir - t;
+  float sh = 0.015 + 0.05 * ed;
+  vec3 col = vec3(strip(dir + sh), strip(dir), strip(dir - 1.3 * sh)) * vec3(0.96, 0.98, 1.0);
+  o = vec4(col * a, a);
+}`;
+  function mk(cv, fs) {
+    const g = cv && cv.getContext('webgl2', { antialias: false, premultipliedAlpha: true, alpha: true, preserveDrawingBuffer: true });
+    if (!g) return null;
+    const sh = (t, src) => { const s = g.createShader(t); g.shaderSource(s, src); g.compileShader(s); if (!g.getShaderParameter(s, g.COMPILE_STATUS)) throw new Error(g.getShaderInfoLog(s)); return s; };
+    const p = g.createProgram(); g.attachShader(p, sh(g.VERTEX_SHADER, VSRC)); g.attachShader(p, sh(g.FRAGMENT_SHADER, fs)); g.linkProgram(p);
+    if (!g.getProgramParameter(p, g.LINK_STATUS)) throw new Error(g.getProgramInfoLog(p));
+    g.useProgram(p); g.bindVertexArray(g.createVertexArray());
+    return { cv, g, uT: g.getUniformLocation(p, 'uT'), uR: g.getUniformLocation(p, 'uR') };
+  }
+  let bg = null, mark = null;
+  try { bg = mk(document.getElementById('bg'), FIELD); } catch (e) { bg = null; }
+  try { mark = mk(document.getElementById('mark'), MARK); } catch (e) { mark = null; }
+  const calmM = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T0 = performance.now(), seed = 40 + 60 * Math.random();
+  function draw(R, scale, t) {
+    if (!R) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) * scale, w = Math.max(1, Math.round(R.cv.clientWidth * dpr)), h = Math.max(1, Math.round(R.cv.clientHeight * dpr));
+    if (R.cv.width !== w || R.cv.height !== h) { R.cv.width = w; R.cv.height = h; }
+    R.g.viewport(0, 0, w, h); R.g.uniform1f(R.uT, t); R.g.uniform2f(R.uR, w, h); R.g.drawArrays(R.g.TRIANGLES, 0, 3);
+  }
+  let last = -1e9, visible = true;
+  const bench = document.getElementById('bench');
+  if (bench && window.IntersectionObserver) new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(bench);
+  const studio = () => !(typeof S !== 'undefined' && S && S.view && S.view.finish === 'matte');
+  function tick(now) {
+    requestAnimationFrame(tick);
+    if (document.hidden || now - last < 33) return;
+    const still = calmM(); if (still && now - last < 1000) return;   // reduced motion: a still frame, refreshed once a second for resizes
+    last = now; const t = still ? seed : seed + (now - T0) / 1000;
+    if (bg) { bg.cv.style.display = studio() ? '' : 'none'; if (studio() && visible) draw(bg, 0.5, t); }
+    if (mark) draw(mark, 1, t);
+  }
+  requestAnimationFrame(tick);
+  return { canvas: () => (bg && studio() ? bg.cv : null), drawNow: () => { if (bg) draw(bg, 0.5, seed + (performance.now() - T0) / 1000); } };
 })();
 
 // ---------- UI ----------
@@ -2840,7 +2944,12 @@ async function saveViewPng() {
   const q = S.quality, w0 = canvas.style.width; S.quality = 'sharp';
   const W = canvas.clientWidth, H = canvas.clientHeight, k = 2;
   canvas.width = W * k; canvas.height = H * k; pngTarget = [W * k, H * k];
-  frame0(); const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+  frame0();
+  // Studio: the 3D canvas is transparent where the background shows, so lay it over the colour field for the file
+  let src = canvas;
+  if (S.view.finish !== 'matte' && BGFX.canvas()) { const c2 = document.createElement('canvas'); c2.width = W * k; c2.height = H * k;
+    const x = c2.getContext('2d'); BGFX.drawNow(); x.drawImage(BGFX.canvas(), 0, 0, W * k, H * k); x.drawImage(canvas, 0, 0); src = c2; }
+  const blob = await new Promise(res => src.toBlob(res, 'image/png'));
   pngTarget = null; S.quality = q; dirty = true;
   const p = presetOf(S) || 'custom', msg = await savePng(blob, `gyroid_${p}_view`); feMsg(msg + '.', 'ok');
 }

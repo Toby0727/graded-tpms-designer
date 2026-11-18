@@ -28,6 +28,11 @@ for tag, name in (('BACKDROP', 'studio_backdrop.jpg'), ('ENVMAP', 'studio_env.jp
         uri = 'data:image/jpeg;base64,' + base64.b64encode(f.read_bytes()).decode()
         body = put(body, f'/*{tag}_BEGIN*/', f'/*{tag}_END*/', json.dumps(uri))
         print(tag.lower(), f.stat().st_size // 1024, 'KB')
+# 4. the Blender fixture meshes (rig_model.py) as a JSON object
+rig = here / 'assets' / 'rig.json'
+if rig.exists() and '/*RIG_BEGIN*/' in body:
+    body = put(body, '/*RIG_BEGIN*/', '/*RIG_END*/', rig.read_text(encoding='utf-8'))
+    print('rig', rig.stat().st_size // 1024, 'KB')
 page.write_text(body, encoding='utf-8')
 head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'

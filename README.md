@@ -14,6 +14,7 @@ A single-page browser tool for designing graded TPMS lattices (gyroid, Schwarz P
 | `fe_validate.js` | Node script that runs `fe_core.js` on a voxel mesh exported from our Abaqus pipeline (`*_solid.npy`). |
 | `preload_fe.json` | FE results solved in advance: K, mass, energy deviation, energy map, displacement and energy fields (2 mm grid), plus the FE-redesign histories. |
 | `studio_render.py` | Blender script (`blender -b -P studio_render.py`) that renders `assets/studio_backdrop.jpg` (the 3D view's studio cove) and `assets/studio_env.jpg` (the equirectangular studio the part reflects). `make_local.py` puts both into the page. |
+| `rig_model.py` | Blender script (`blender -b -P rig_model.py`) that models the bending fixture (slotted rail with a mm scale, plate supports, black loading nose, load cell, pedestal, a spreader bar for 4-point) and writes `assets/rig.json`. The page draws these meshes with depth together with the ray-marched part; the supports follow the span and the nose moves with the load. |
 | `make_local.py` | Copies `fe_core.js` and `preload_fe.json` into the page, then writes `index.html`. Run it after any edit, then commit; every push to `main` redeploys the site. |
 
 ## What the page does

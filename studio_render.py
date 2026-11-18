@@ -57,9 +57,9 @@ def cove(m, r=4.0, x=40.0):
     ob = bpy.data.objects.new('cove', me); bpy.context.collection.objects.link(ob); me.materials.append(m); return ob
 
 # ---------- 1. backdrop ----------
-EXPO = 0.75   # lifts the cove to about the page colour (#e7e7e4)
+EXPO = 1.35   # a near-white cove (the user asked for a whiter, brighter look)
 sc = reset()
-grey = mat('cove', (0.62, 0.62, 0.60), 0.8)
+grey = mat('cove', (0.80, 0.80, 0.79), 0.8)
 cove(grey)
 key = plane('key', (9, 5), (-5, -6, 9), (0, 0, 0), emit('k', 9.0, (1.0, 0.985, 0.96)))
 look_at(key, (0, 2, 1))

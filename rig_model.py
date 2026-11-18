@@ -8,8 +8,8 @@
 #   rail      top face at z = 0, centred, 200 long (the page stretches it in x to fit the span)
 #   support   the anvil's contact line at z = 0 (the beam's underside), the foot on the rail at z = -50; the upright stands
 #             on the -x side of the contact (the page mirrors the part for the support on the +x side)
-#   nose      the loading edge at z = 0 (the beam's top face), a slim plate up to z = 64 and a clamp block to z = 76
-#   head      knurled nut and shank, from z = 0 (the top of the nose)
+#   nose      a flat plate, the loading edge (a rounded corner) at x = 0, z = 0; plate centre x = -10, top z = 46
+#   head      knurled nut and shank, from z = 0 (placed on the plate's top, at the plate centre)
 #   bar       a spreader for 4-point loading, bottom at z = 0, 100 long (stretched in x)
 #   pedestal  under the rail, top at z = 0
 import bpy, bmesh, math, os, json, base64, struct
@@ -140,27 +140,26 @@ thumb = join([knurl(5.5, 6, (-23, 13, -40 + 3)), cyl(3, 4, (-23, 13, -40 - 1), v
 ring = bail(-13.2, -24, r=8.5, t=0.9)
 keep('support', [(sup, STEEL), (thumb, POLISH), (ring, POLISH)])
 
-# ---------------- nose: a slim tapered plate (as in the photo): 30 wide, 64 high, 20 thick, flanks 15 deg off vertical
-#                  down to an R2 loading edge at z = 0; a small clamp block on top with a knurled side knob ----------------
-r, th = 2.0, 15 * D2R
-arc = [(r * math.cos(a), r + r * math.sin(a)) for a in [(-15 - i * 150 / 18) * D2R for i in range(19)]]
-zf = r - r * math.sin(th) + (15 - r * math.cos(th)) / math.tan(th)        # where the flank reaches the full half width 15
-plate = prism_xz([(15, 64), (15, zf)] + arc + [(-15, zf), (-15, 64)], 20)
-bevel(plate, 0.7, segs=2, angle=50)
-boolean(plate, cyl(2.2, 30, (0, 0, 56), axis='Y', verts=24, bv=0))       # cross hole near the top, as on the photo
-clamp = box(24, 22, 12, (0, 0, 64 + 6), bv=1.0)
-side = join([knurl(4.6, 6, (0, 0, 0), ridges=40, depth=0.5), cyl(2.4, 3, (0, 0, -4.5), verts=24, bv=0)])
-for v in side.data.vertices: x, z = v.co.x, v.co.z; v.co.x, v.co.z = z, x   # axis z -> x
-side.location = (12 + 4.5, 0, 70); sel(side); bpy.ops.object.transform_apply(location=True)
-keep('nose', [(join([plate, clamp]), STEEL), (side, POLISH)])
+# ---------------- nose (as on the photo): a flat plate in the x-z plane, 12 thick (y), 30 wide, 46 high; the lower-left corner
+#                  cut by a 45 deg chamfer, the lower-right corner rounded (R 5); the lowest point of that round is the loading
+#                  edge at x = 0, z = 0 (it runs along y, across the specimen). The plate's centre line is at x = -10. ----------------
+R = 5.0
+corner = [(R * math.cos(a), R + R * math.sin(a)) for a in [(0 - i * 90 / 16) * D2R for i in range(17)]]   # (5,5) .. (0,0)
+prof = [(5, 46), (5, 5)] + corner[1:] + [(-6, 0), (-25, 19), (-25, 46)]
+plate = prism_xz(prof, 12)
+bevel(plate, 0.8, segs=2, angle=50)
+keep('nose', [(plate, STEEL)])
 
-# ---------------- head: knurled nut, collar, shank with a flat and a cross hole (slimmer, as on the photo), from z = 0 ----------------
-nut = knurl(10, 8, (0, 0, 4), ridges=60, depth=0.6)
-collar = cyl(7, 3, (0, 0, 9.5), verts=48, bv=0.4)
-shank = cyl(6, 38, (0, 0, 11 + 19), verts=64, bv=0.9, segs=3)
-boolean(shank, box(8, 24, 22, (6 + 4 - 1.3, 0, 34), bv=0))        # the flat on one side
-boolean(shank, cyl(2.0, 24, (0, 0, 38), axis='Y', verts=24, bv=0))  # cross hole
-keep('head', [(join([nut, collar, shank]), POLISH)])
+# ---------------- head (centred on the plate, x = -10 in the nose frame): knurled nut on the plate's top, a radial set screw in
+#                  the nut's side, a plain shank with a cross hole and a chamfered top ----------------
+nut = knurl(11, 9, (0, 0, 4.5), ridges=64, depth=0.6)
+boolean(nut, cyl(1.6, 8, (8, -8, 4.5), axis='Y', verts=16, bv=0))        # the set-screw hole
+setscrew = cyl(1.5, 3, (0, 0, 0), axis='X', verts=6, bv=0)
+for v in setscrew.data.vertices: v.co.x += 10.8
+setscrew.rotation_euler = (0, 0, -40 * D2R); setscrew.location = (0, 0, 4.5); sel(setscrew); bpy.ops.object.transform_apply(location=True, rotation=True)
+shank = cyl(6, 34, (0, 0, 9 + 17), verts=64, bv=1.2, segs=3)
+boolean(shank, cyl(2.0, 24, (0, 0, 36), axis='Y', verts=24, bv=0))       # cross hole near the top
+keep('head', [(join([nut, shank]), POLISH), (setscrew, BLACK)])
 
 # ---------------- bar: a stainless spreader for 4-point loading ----------------
 bar = box(100, 42, 14, (0, 0, 7), bv=1.4)

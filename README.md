@@ -13,6 +13,7 @@ A single-page browser tool for designing graded TPMS lattices (gyroid, Schwarz P
 | `mg_test.js` | Node check of the multigrid preconditioner against plain Jacobi on synthetic beams. |
 | `fe_validate.js` | Node script that runs `fe_core.js` on a voxel mesh exported from our Abaqus pipeline (`*_solid.npy`). |
 | `preload_fe.json` | FE results solved in advance: K, mass, energy deviation, energy map, displacement and energy fields (2 mm grid), plus the FE-redesign histories. |
+| `studio_render.py` | Blender script (`blender -b -P studio_render.py`) that renders `assets/studio_backdrop.jpg` (the 3D view's studio cove) and `assets/studio_env.jpg` (the equirectangular studio the part reflects). `make_local.py` puts both into the page. |
 | `make_local.py` | Copies `fe_core.js` and `preload_fe.json` into the page, then writes `index.html`. Run it after any edit, then commit; every push to `main` redeploys the site. |
 
 ## What the page does
@@ -38,7 +39,7 @@ A single-page browser tool for designing graded TPMS lattices (gyroid, Schwarz P
   - *Sharp hole edges* cuts each hole cleanly instead, with an optional lining wall.
   - Clean cuts cost stiffness because of the truncated-cell boundary effect: 3-point gyroid 272 vs 340 N/mm with tapered holes. The page footnote and the 11-11 journal have the full table.
   - PNG figures: the 3D view at 2× resolution (Side + Ortho gives the paper-style side view), plus the energy map and the density map.
-- **View finish:** *Studio* (chrome studio-strip reflections, moving background) or *Matte* (flat, for figures).
+- **View finish:** *Studio* (chrome reflections of a Blender-rendered studio, a rendered studio cove behind) or *Matte* (flat, for figures).
 - **FE checks:** before a run the page counts how much of the material stays in one piece at the chosen voxel size; below 70 % it does not solve and offers 0.5 mm voxels (sheet walls under 1 mm need it).
 
 The equations are listed in the page's **Method** section.

@@ -20,6 +20,14 @@ if pre.exists():
     data = json.loads(pre.read_text(encoding='utf-8'))
     body = put(body, '/*PRELOAD_BEGIN*/', '/*PRELOAD_END*/', json.dumps(data, separators=(',', ':'), ensure_ascii=False))
     print('preload:', len(data['list']), 'results')
+# 3. the Blender studio images (studio_render.py) as data URIs: the 3D view's backdrop and the reflection map
+import base64
+for tag, name in (('BACKDROP', 'studio_backdrop.jpg'), ('ENVMAP', 'studio_env.jpg')):
+    f = here / 'assets' / name
+    if f.exists() and f'/*{tag}_BEGIN*/' in body:
+        uri = 'data:image/jpeg;base64,' + base64.b64encode(f.read_bytes()).decode()
+        body = put(body, f'/*{tag}_BEGIN*/', f'/*{tag}_END*/', json.dumps(uri))
+        print(tag.lower(), f.stat().st_size // 1024, 'KB')
 page.write_text(body, encoding='utf-8')
 head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
